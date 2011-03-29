@@ -1,0 +1,99 @@
+#!/usr/bin/env ruby
+require File.join(File.dirname(__FILE__), "../config/env")
+require 'trollop'
+
+opts = Trollop::options do
+  banner <<-EOS
+Stub out a new component
+ 
+Usage: stub_component [opts] <component name>
+
+Opts:
+EOS
+end
+Trollop::die "Only one component name please" if ARGV.size > 1
+Trollop::die "No component name given" if ARGV.empty?
+
+name = ARGV.first
+Trollop::die "Component #{name} already exist?" if File.exist? MINI_ROOT + "/lib/#{name}/lib/#{name}"
+
+camel_name = name.split('_').map(&:capitalize).join
+FileUtils.mkdir_p File.join(MINI_ROOT, "lib/#{name}/lib/#{name}")
+FileUtils.mkdir_p File.join(MINI_ROOT, "lib/#{name}/test")
+FileUtils.mkdir_p File.join(MINI_ROOT, "lib/#{name}/tasks")
+FileUtils.mkdir_p File.join(MINI_ROOT, "lib/#{name}/bin")
+
+# Module file
+File.open( File.join(MINI_ROOT, "lib/#{name}/lib/#{name}.rb"), 'w' ) do |f|
+  file = <<-HEREDOC
+require File.expand_path(File.join(File.dirname(__FILE__), '../../../config/env')) if !defined? MINI_ROOT
+
+module #{camel_name}
+  class #{camel_name}Error < StandardError
+  end
+
+  autoload :Base, '#{name}/base'
+end
+HEREDOC
+  f.write(file)
+end
+
+# Base class file
+File.open( File.join(MINI_ROOT, "lib/#{name}/lib/#{name}/base.rb"), 'w' ) do |f|
+  file = <<-HEREDOC
+require File.expand_path(File.join(File.dirname(__FILE__), '../../../config/env')) if !defined? MINI_ROOT
+
+module #{camel_name}
+  class Base
+    def some_method # Delete at your leisure
+      '#{name}'
+    end
+  end
+end
+HEREDOC
+  f.write(file)
+end
+
+# Test setup 
+File.open( File.join(MINI_ROOT, "lib/#{name}/test/setup.rb"), 'w' ) do |f|
+  file = <<-HEREDOC
+require File.expand_path(File.join(File.dirname(__FILE__), '../../../config/env')) if !defined? MINI_ROOT
+require 'test/unit'
+HEREDOC
+  f.write(file)
+end
+
+# Test stub
+File.open( File.join(MINI_ROOT, "lib/#{name}/test/test_#{name}.rb"), 'w' ) do |f|
+  file = <<-HEREDOC
+require File.dirname(__FILE__) + '/setup'
+require '#{name}'
+
+class Test#{camel_name} < Test::Unit::TestCase
+  def test_some_method
+    assert_equal('#{name}', #{camel_name}::Base.new.some_method)
+  end
+end
+HEREDOC
+  f.write(file)
+end
+
+# Rake stub
+File.open( File.join(MINI_ROOT, "lib/#{name}/Rakefile"), 'w' ) do |f|
+  file = <<-HEREDOC
+require File.expand_path(File.join(File.dirname(__FILE__), '../../config/env')) if !defined? MINI_ROOT
+require '#{name}'
+
+Dir[File.join(File.dirname(__FILE__), 'tasks/**/*.rake')].each do |f|
+  load f
+end
+
+namespace :#{name} do
+  desc 'stub task'
+  task :stub do
+    puts :#{name}
+  end
+end
+HEREDOC
+  f.write(file)
+end

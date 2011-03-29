@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+require 'fileutils'
+# Note: Doesn't require config/env to avoid circular bundler dependency
+MINI_ROOT = File.dirname(__FILE__) + '/../'
+
+# Do deb installs if on Ubuntu
+if File.exist?('/etc/issue') && IO.read('/etc/issue') =~ /Ubuntu/
+  IO.readlines(MINI_ROOT + '/Debfile').each do |deb|
+    cmd = "sudo apt-get install -y %s 2>&1" % deb.strip
+    system cmd
+  end
+end
+
+# Intall gems
+default_dir = '/usr/share/mini/bundle'
+gem_dir = File.exist?(default_dir) ? gem_dir : MINI_ROOT + '/var/bundle'
+cmd = "cd #{MINI_ROOT}; bundle install %s 2>&1 >bundle.log" % gem_dir 
+system cmd
+
+if File.exist? MINI_ROOT + '/share'
+  FileUtils.mv(MINI_ROOT + '/share', MINI_ROOT + '/share.' + Time.now.to_i.to_s)
+end
+
+# Symlink share
+if File.exist? "/media/share"
+  FileUtils.ln_s("/media/share", MINI_ROOT + '/share')
+end
+

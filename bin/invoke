@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+# Short cut to cap invoke
+# Usage: invoke "cmd" host1 [host2 ...]
+
+`cap invoke COMMAND=#{ARGV.first} HOSTS=#{ARGV.slice(1,ARGV.size).join(',')}`

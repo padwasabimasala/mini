@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+file = ARGV.first ? File.open(ARGV.first, 'r') : STDIN
+file.readlines.each do |msg|
+  puts msg.gsub("/var", "\n/var").gsub('Backtrace: ', "Backtrace:\n")
+  puts
+end

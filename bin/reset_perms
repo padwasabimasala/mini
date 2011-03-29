@@ -1,0 +1,6 @@
+#!/bin/bash
+for dir in /var/www/apps/mini /usr/share/mini; do
+  if ! test -d $dir; then exit; fi
+  sudo chown -R :mb $dir
+  sudo chmod -R g+w $dir
+done

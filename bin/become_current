@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+require File.dirname(__FILE__) + '/../config/env'
+begin
+  File.unlink Mini.config.deploy_path
+rescue Errno::ENOENT;end
+File.symlink MINI_ROOT, Mini.config.deploy_path

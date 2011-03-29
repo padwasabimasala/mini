@@ -1,0 +1,108 @@
+#!/usr/bin/env ruby
+begin
+  require File.join(File.dirname(__FILE__), "../config/env")
+rescue
+  STDERR.puts "Could not require 'config/env'"
+  exit 1
+end
+
+##
+require 'trollop'
+opts = Trollop::options do
+  banner <<-EOS
+Builds mini and fails on any errors.
+ 
+Usage: build 
+EOS
+  opt :test_only, "Just run tests and don't build"
+  opt :no_test, "Skip all tests and just build"
+  opt :build_name, "Name of build. Defaults to git branch", :type => :string
+  opt :copy_to, "Path to copy tgz to after building", :type => :string
+  opt :symlink_latest, "Create name-latest symlink for build"
+  opt :show_times, "Print times after each test"
+end
+
+DO_BUILD = opts.test_only ? false : true
+RUN_TESTS = opts.no_test ? false : true
+BUILD_NAME = opts.build_name
+COPY_TO = opts.copy_to 
+MAKE_SYMLINK = opts.symlink_latest
+SHOW_TIMES = opts.show_times
+
+# Helper methods
+ERRORS = []
+def error(msg); ERRORS << msg; end
+def errors?; !ERRORS.empty?; end
+def fail!; ERRORS.each {|e| STDERR.puts e; puts}; exit 1; end
+
+def catch_errors(cmd)
+  out = `#{cmd} 2>&1`
+  error out if $? != 0
+end
+
+def test_cmd(cmd)
+  puts "Testing: #{cmd}"
+  start = Time.new
+  catch_errors cmd
+  puts "Took #{Time.new - start} secs" if SHOW_TIMES
+end
+  
+def test_block(name)
+  # Blocks should return nil if success, otherwise error string
+  puts "Testing: #{name}"
+  start = Time.new
+  out = yield
+  error out if out 
+  puts "Took #{Time.new - start} secs" if SHOW_TIMES
+end
+
+def make_build
+  name = BUILD_NAME || `git branch |grep \\* |cut -c3-`.strip
+  build_path = File.expand_path("#{name}-#{Time.now.strftime "%Y%m%d%H%M%S"}.tgz")
+  File.open(build_path, 'w') {|f| f.write ''} # So tar doesn't complain that ./ has changed while reading
+  build_file = File.basename(build_path)
+  Dir.chdir(MINI_ROOT) do
+    catch_errors "tar czf ./#{build_file} --exclude=#{build_file} --exclude=var/bundle ."
+  end
+  if COPY_TO
+    copy_path = File.join(COPY_TO, File.basename(build_path))
+    FileUtils.cp(build_path, copy_path)
+    build_path = copy_path
+  end
+  if MAKE_SYMLINK
+    link_path = File.join(File.dirname(build_path), name + '-latest')
+    File.delete(link_path) if File.symlink?(link_path)
+    File.symlink(build_path, link_path)
+  end
+end
+
+##
+if RUN_TESTS
+  test_cmd "bundle install"
+  test_cmd "rake test"
+  test_block(:require_all) do
+    Dir.glob(MINI_ROOT + '/lib/*') do |dir|
+      cmp = File.basename dir
+      begin
+        require cmp
+      rescue MissingSourceFile
+        "Could not require #{cmp} component"
+      rescue => e
+        "Caught exception #{e} when requiring component #{cmp}"
+      end
+    end
+  end
+  test_cmd "#{MINI_ROOT + '/lib/drone/bin/drone'} --test-all"
+  test_cmd "rake mini:integration_test"
+end
+
+if DO_BUILD
+  begin
+    make_build
+  rescue => e
+    error "#{e.message}\n\n#{e.backtrace}"
+  end
+end
+
+fail! if errors?
+

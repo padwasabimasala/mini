@@ -1,0 +1,106 @@
+production:
+  adapter: mysql
+  encoding: utf8
+  host: db.miningbased.com
+  database: mini_production
+  username: root
+  password: root 
+  pool: 5
+  reconnect: true
+
+bucket01:
+  adapter: mysql
+  encoding: utf8
+  host: bucket01.miningbased.com
+  database: mini_production
+  username: root
+  password: root 
+  pool: 5
+  reconnect: true
+
+bucket02:
+  adapter: mysql
+  encoding: utf8
+  host: bucket02.miningbased.com
+  database: mini_production
+  username: root
+  password: root 
+  pool: 5
+  reconnect: true
+
+stage:
+  adapter: mysql
+  encoding: utf8
+  host: bucket02.miningbased.com
+  database: mini_stage
+  username: root
+  password: root 
+  pool: 5
+  reconnect: true
+
+development:
+  adapter: mysql
+  encoding: utf8
+  host: localhost
+  database: development
+  username: root
+  password: root
+  pool: 5
+  reconnect: true
+
+test:
+  adapter: mysql
+  host: localhost
+  database: test
+  username: root
+  password: root
+
+micro:
+  adapter: mysql
+  host: localhost
+  database: micro
+  username: root
+  password: root
+
+micro_mthorley:
+  adapter: mysql
+  host: localhost
+  database: micro_mthorley
+  username: root
+  password: root
+
+integration_test:
+  adapter: mysql
+  encoding: utf8
+  host: localhost
+  database: integration_test
+  username: root
+  password: root
+  pool: 5
+  reconnect: true
+
+mthorley:
+  adapter: mysql
+  encoding: utf8
+  host: bucket01.miningbased.com #localhost
+  database: mini_production
+  username: root
+  password: root 
+  pool: 5
+  reconnect: true
+  
+blaine:
+  adapter: mysql
+  host: localhost
+  database: development
+  username: root
+  password: root
+  reconnect: true
+
+spanky:
+  adapter: mysql
+  host: localhost
+  database: development
+  username: root
+  password: root
+  reconnect: true

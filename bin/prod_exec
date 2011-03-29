@@ -1,0 +1,5 @@
+#!/bin/bash
+cd /var/www/apps/mini/current
+source .env_generic
+export MINI_ENV=production
+echo "$($@)"

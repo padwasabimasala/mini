@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby
+require File.dirname(__FILE__) + '/../config/env'
+# Logs STDIN or first arg to mini.log.notice
+
+Mini.log.process_name = 'notifier'
+Mini.log.level = :notice
+
+if STDIN.fcntl(Fcntl::F_GETFL, 0) == 0 
+  STDIN.each {|ln| Mini.log.notice ln}
+else
+  Mini.log.notice ARGV.first
+end
